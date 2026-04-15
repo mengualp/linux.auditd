@@ -4,6 +4,7 @@ set -euo pipefail
 
 rules_file="${1:-audit.rules}"
 work_dir="$(mktemp -d)"
+portable_rules="${work_dir}/99-ci-portable.rules"
 strict_rules="${work_dir}/99-ci-strict.rules"
 
 cleanup() {
@@ -45,9 +46,52 @@ load_rules_copy() {
   sudo augenrules --load
 }
 
-build_strict_copy() {
+identity_exists() {
+  local field="$1"
+  local value="$2"
+
+  case "$field" in
+    gid|egid|sgid|fsgid|obj_gid)
+      getent group "$value" >/dev/null 2>&1
+      ;;
+    *)
+      getent passwd "$value" >/dev/null 2>&1
+      ;;
+  esac
+}
+
+should_skip_identity_line() {
+  local line="$1"
+  local regex='-F[[:space:]]+(auid|uid|euid|suid|fsuid|obj_uid|gid|egid|sgid|fsgid|obj_gid)(!?=)([^[:space:]]+)'
+
+  while [[ "$line" =~ $regex ]]; do
+    local field="${BASH_REMATCH[1]}"
+    local value="${BASH_REMATCH[3]}"
+
+    line="${line#*"${BASH_REMATCH[0]}"}"
+
+    case "$value" in
+      unset|-1|4294967295)
+        continue
+        ;;
+    esac
+
+    if [[ "$value" =~ ^-?[0-9]+$ ]]; then
+      continue
+    fi
+
+    if ! identity_exists "$field" "$value"; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+build_ci_copy() {
   local source_rules="$1"
   local output_rules="$2"
+  local drop_ignore_errors="${3:-0}"
 
   : > "$output_rules"
 
@@ -62,6 +106,10 @@ build_strict_copy() {
         continue
         ;;
       -i)
+        if [[ "$drop_ignore_errors" == "1" ]]; then
+          continue
+        fi
+        printf '%s\n' "$line" >> "$output_rules"
         continue
         ;;
     esac
@@ -74,10 +122,17 @@ build_strict_copy() {
       target="${BASH_REMATCH[1]}"
     elif [[ "$trimmed" =~ -F[[:space:]]+dir=([^[:space:]]+) ]]; then
       target="${BASH_REMATCH[1]}"
+    elif [[ "$trimmed" =~ -F[[:space:]]+exe=([^[:space:]]+) ]]; then
+      target="${BASH_REMATCH[1]}"
     fi
 
     if [[ -n "$target" && "$target" == /* && ! -e "$target" ]]; then
       printf '# CI skipped missing path: %s\n' "$line" >> "$output_rules"
+      continue
+    fi
+
+    if should_skip_identity_line "$trimmed"; then
+      printf '# CI skipped missing identity: %s\n' "$line" >> "$output_rules"
       continue
     fi
 
@@ -87,9 +142,10 @@ build_strict_copy() {
 
 start_auditd
 
-load_rules_copy "$rules_file"
+build_ci_copy "$rules_file" "$portable_rules" 0
+load_rules_copy "$portable_rules"
 sudo auditctl -l | grep -q 'process_creation'
 
-build_strict_copy "$rules_file" "$strict_rules"
+build_ci_copy "$rules_file" "$strict_rules" 1
 load_rules_copy "$strict_rules"
 sudo auditctl -l | grep -q 'process_creation'
