@@ -40,7 +40,8 @@
 -f 1
 
 # Ignore errors
-## e.g. caused by users or files not found in the local environment
+## Keep optional distro-specific paths from aborting the whole load.
+## For strict validation, test a copy of this file with this line removed.
 -i
 
 # Self Auditing ---------------------------------------------------------------
@@ -181,9 +182,9 @@
 ## User, group, password databases
 -w /etc/group -p wa -k etcgroup
 -w /etc/passwd -p wa -k etcpasswd
--w /etc/gshadow -k etcgroup
--w /etc/shadow -k etcpasswd
--w /etc/security/opasswd -k opasswd
+-w /etc/gshadow -p wa -k etcgroup
+-w /etc/shadow -p wa -k etcpasswd
+-w /etc/security/opasswd -p wa -k opasswd
 
 ## Sudoers file changes
 -w /etc/sudoers -p wa -k actions
@@ -238,6 +239,14 @@
 -w /etc/init.d/ -p wa -k init
 -w /etc/init/ -p wa -k init
 
+## System binary and boot path changes
+-a always,exit -F arch=b32 -F dir=/bin -F perm=wa -k bin_writes
+-a always,exit -F arch=b64 -F dir=/bin -F perm=wa -k bin_writes
+-a always,exit -F arch=b32 -F dir=/usr -F perm=wa -k usr_writes
+-a always,exit -F arch=b64 -F dir=/usr -F perm=wa -k usr_writes
+-a always,exit -F arch=b32 -F dir=/boot -F perm=wa -k boot_writes
+-a always,exit -F arch=b64 -F dir=/boot -F perm=wa -k boot_writes
+
 ## Library search paths
 -w /etc/ld.so.conf -p wa -k libpath
 -w /etc/ld.so.conf.d -p wa -k libpath
@@ -260,8 +269,8 @@
 -w /etc/exim4/ -p wa -k mail
 
 ## SSH configuration
--w /etc/ssh/sshd_config -k sshd
--w /etc/ssh/sshd_config.d -k sshd
+-w /etc/ssh/sshd_config -p wa -k sshd
+-w /etc/ssh/sshd_config.d -p wa -k sshd
 
 ## root ssh key tampering
 -w /root/.ssh -p wa -k rootkey
@@ -368,8 +377,8 @@
 -w /usr/bin/uftp -p x -k susp_activity
 -w /usr/sbin/uftp -p x -k susp_activity
 
--w /lib/systemd/system/uftp.service -k susp_activity
--w /usr/lib/systemd/system/uftp.service -k susp_activity
+-w /lib/systemd/system/uftp.service -p wa -k susp_activity
+-w /usr/lib/systemd/system/uftp.service -p wa -k susp_activity
 
 ### atftpd
 ### https://sourceforge.net/projects/atftp/
@@ -383,11 +392,11 @@
 -w /usr/bin/in.tftpd -p x -k susp_activity
 -w /usr/sbin/in.tftpd -p x -k susp_activity
 
--w /lib/systemd/system/atftpd.service -k susp_activity
--w /usr/lib/systemd/system/atftpd.service -k susp_activity
+-w /lib/systemd/system/atftpd.service -p wa -k susp_activity
+-w /usr/lib/systemd/system/atftpd.service -p wa -k susp_activity
 
--w /lib/systemd/system/atftpd.socket -k susp_activity
--w /usr/lib/systemd/system/atftpd.socket -k susp_activity
+-w /lib/systemd/system/atftpd.socket -p wa -k susp_activity
+-w /usr/lib/systemd/system/atftpd.socket -p wa -k susp_activity
 
 ## sssd
 -a always,exit -F path=/usr/libexec/sssd/p11_child -F perm=x -F auid>=500 -F auid!=4294967295 -k T1078_Valid_Accounts
@@ -484,8 +493,8 @@
 -w /usr/bin/gdbus -p x -k gdubs_call
 
 ## setfiles
--a always,exit -F path=/usr/bin/setfiles -F perm=x -F auid>=500 -F auid!=4294967295 -k -F T1078_Valid_Accounts
--a always,exit -F path=/usr/sbin/setfiles -F perm=x -F auid>=500 -F auid!=4294967295 -k -F T1078_Valid_Accounts
+-a always,exit -F path=/usr/bin/setfiles -F perm=x -F auid>=500 -F auid!=4294967295 -k T1078_Valid_Accounts
+-a always,exit -F path=/usr/sbin/setfiles -F perm=x -F auid>=500 -F auid!=4294967295 -k T1078_Valid_Accounts
 
 ### dbus
 -a always,exit -F path=/lib64/dbus-1/dbus-daemon-launch-helper -F perm=x -F auid>=500 -F auid!=4294967295 -k T1078_Valid_Accounts
@@ -516,7 +525,7 @@
 
 # Web Server Activity
 ## Change the number "33" to the ID of your WebServer user. Default: www-data:x:33:33
--a always,exit -F arch=b64 -S execve -F euid=33 -k detect_execve_www
+-a always,exit -F arch=b64 -S execve -F euid=33 -F key=detect_execve_www -F key=process_creation
 
 ### https://clustershell.readthedocs.io/
 -w /bin/clush -p x -k susp_shell
@@ -582,7 +591,7 @@
 -w /sbin/yast -p x -k software_mgmt
 -w /sbin/yast2 -p x -k software_mgmt
 -w /bin/rpm -p x -k software_mgmt
--w /usr/bin/zypper -k software_mgmt
+-w /usr/bin/zypper -p x -k software_mgmt
 
 # DPKG / APT-GET (Debian/Ubuntu)
 -w /usr/bin/dpkg -p x -k software_mgmt
@@ -688,47 +697,47 @@
 
 # CrowdStrike Falcon
 # Identify CrowdStrike Falcon Sensor updates
--a always,exit -F arch=b32 -F path=/etc/crowdstrike/falcon-sensor.conf -p wa -F key=falcon_sensor_update
--a always,exit -F arch=b64 -F path=/etc/crowdstrike/falcon-sensor.conf -p wa -F key=falcon_sensor_update
+-a always,exit -F arch=b32 -F path=/etc/crowdstrike/falcon-sensor.conf -F perm=wa -F key=falcon_sensor_update
+-a always,exit -F arch=b64 -F path=/etc/crowdstrike/falcon-sensor.conf -F perm=wa -F key=falcon_sensor_update
 
--a always,exit -F arch=b32 -F path=/usr/lib/crowdstrike/falcon-sensor.conf -p wa -F key=falcon_sensor_update
--a always,exit -F arch=b64 -F path=/usr/lib/crowdstrike/falcon-sensor.conf -p wa -F key=falcon_sensor_update
+-a always,exit -F arch=b32 -F path=/usr/lib/crowdstrike/falcon-sensor.conf -F perm=wa -F key=falcon_sensor_update
+-a always,exit -F arch=b64 -F path=/usr/lib/crowdstrike/falcon-sensor.conf -F perm=wa -F key=falcon_sensor_update
 
 # Identify CrowdStrike Falcon Sensor
--a always,exit -F arch=b32 -F dir=/etc/crowdstrike/ -p wa -F key=falcon_sensor
--a always,exit -F arch=b64 -F dir=/etc/crowdstrike/ -p wa -F key=falcon_sensor
+-a always,exit -F arch=b32 -F dir=/etc/crowdstrike/ -F perm=wa -F key=falcon_sensor
+-a always,exit -F arch=b64 -F dir=/etc/crowdstrike/ -F perm=wa -F key=falcon_sensor
 
--a always,exit -F arch=b32 -F dir=/usr/lib/crowdstrike/ -p wa -F key=falcon_sensor
--a always,exit -F arch=b64 -F dir=/usr/lib/crowdstrike/ -p wa -F key=falcon_sensor
+-a always,exit -F arch=b32 -F dir=/usr/lib/crowdstrike/ -F perm=wa -F key=falcon_sensor
+-a always,exit -F arch=b64 -F dir=/usr/lib/crowdstrike/ -F perm=wa -F key=falcon_sensor
 
--a always,exit -F arch=b32 -F dir=/opt/CrowdStrike/ -p wa -F key=falcon_sensor
--a always,exit -F arch=b64 -F dir=/opt/CrowdStrike/ -p wa -F key=falcon_sensor
+-a always,exit -F arch=b32 -F dir=/opt/CrowdStrike/ -F perm=wa -F key=falcon_sensor
+-a always,exit -F arch=b64 -F dir=/opt/CrowdStrike/ -F perm=wa -F key=falcon_sensor
 
--a always,exit -F arch=b32 -F dir=/var/log/crowdstrike/ -p wa -F key=falcon_sensor
--a always,exit -F arch=b64 -F dir=/var/log/crowdstrike/ -p wa -F key=falcon_sensor
+-a always,exit -F arch=b32 -F dir=/var/log/crowdstrike/ -F perm=wa -F key=falcon_sensor
+-a always,exit -F arch=b64 -F dir=/var/log/crowdstrike/ -F perm=wa -F key=falcon_sensor
 
 # Identify CrowdStrike Falcon Agent activity
--a always,exit -F arch=b32 -F path=/usr/bin/falcon-scout -p x -F key=falcon_agent
--a always,exit -F arch=b64 -F path=/usr/bin/falcon-scout -p x -F key=falcon_agent
+-a always,exit -F arch=b32 -F path=/usr/bin/falcon-scout -F perm=x -F key=falcon_agent
+-a always,exit -F arch=b64 -F path=/usr/bin/falcon-scout -F perm=x -F key=falcon_agent
 
--a always,exit -F arch=b32 -F path=/usr/bin/falcon-agent -p x -F key=falcon_agent
--a always,exit -F arch=b64 -F path=/usr/bin/falcon-agent -p x -F key=falcon_agent
+-a always,exit -F arch=b32 -F path=/usr/bin/falcon-agent -F perm=x -F key=falcon_agent
+-a always,exit -F arch=b64 -F path=/usr/bin/falcon-agent -F perm=x -F key=falcon_agent
 
 # Identify CrowdStrike Falcon Sensor network
--a always,exit -F arch=b32 -S connect -F dir=+ -F obj=/opt/CrowdStrike/falcon-sensor -F key=crowdstrike_network
--a always,exit -F arch=b64 -S connect -F dir=+ -F obj=/opt/CrowdStrike/falcon-sensor -F key=crowdstrike_network
+-a always,exit -F arch=b32 -S connect -F exe=/opt/CrowdStrike/falcon-sensor -F key=crowdstrike_network
+-a always,exit -F arch=b64 -S connect -F exe=/opt/CrowdStrike/falcon-sensor -F key=crowdstrike_network
 
 ## Docker
--w /usr/bin/dockerd -k docker
--w /usr/bin/docker -k docker
--w /usr/bin/docker-containerd -k docker
--w /usr/bin/docker-runc -k docker
+-w /usr/bin/dockerd -p x -k docker
+-w /usr/bin/docker -p x -k docker
+-w /usr/bin/docker-containerd -p x -k docker
+-w /usr/bin/docker-runc -p x -k docker
 -w /var/lib/docker -p wa -k docker
--w /etc/docker -k docker
--w /etc/sysconfig/docker -k docker
--w /etc/sysconfig/docker-storage -k docker
--w /usr/lib/systemd/system/docker.service -k docker
--w /usr/lib/systemd/system/docker.socket -k docker
+-w /etc/docker -p wa -k docker
+-w /etc/sysconfig/docker -p wa -k docker
+-w /etc/sysconfig/docker-storage -p wa -k docker
+-w /usr/lib/systemd/system/docker.service -p wa -k docker
+-w /usr/lib/systemd/system/docker.socket -p wa -k docker
 
 ## Virtualization stuff
 -w /usr/bin/qemu-system-x86_64 -p x -k qemu-system-x86_64
@@ -740,7 +749,7 @@
 -w /usr/bin/VBoxManage -p x -k VBoxManage
 
 ## Kubelet
--w /usr/bin/kubelet -k kubelet
+-w /usr/bin/kubelet -p x -k kubelet
 
 # ipc system call
 # /usr/include/linux/ipc.h
@@ -779,16 +788,15 @@
 
 ## Disable these rules if they create too many events in your environment
 
-## Common Shells
--w /bin/bash -p x -k susp_shell
--w /bin/dash -p x -k susp_shell
--w /bin/busybox -p x -k susp_shell
--w /bin/zsh -p x -k susp_shell
--w /bin/sh -p x -k susp_shell
--w /bin/ksh -p x -k susp_shell
-
 ## Root command executions
--a always,exit -F arch=b64 -F euid=0 -F auid>=1000 -F auid!=-1 -S execve -k rootcmd
+-a always,exit -F arch=b32 -F euid=0 -F auid>=1000 -F auid!=-1 -S execve -S execveat -F key=rootcmd -F key=process_creation
+-a always,exit -F arch=b64 -F euid=0 -F auid>=1000 -F auid!=-1 -S execve -S execveat -F key=rootcmd -F key=process_creation
+
+## Process creation
+### Collect generic execution telemetry and classify shells, webserver activity,
+### and parent/child patterns in downstream tooling.
+-a always,exit -F arch=b32 -S execve -S execveat -k process_creation
+-a always,exit -F arch=b64 -S execve -S execveat -k process_creation
 
 ## File Deletion Events by User
 -a always,exit -F arch=b64 -S rmdir -S unlink -S unlinkat -S rename -S renameat -F auid>=1000 -F auid!=-1 -k delete

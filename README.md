@@ -18,6 +18,21 @@ The idea of this auditd configuration is to provide a basic configuration that
 - covers security relevant activity
 - is easy to read (different sections, many comments)
 
+## Validation
+
+This ruleset intentionally includes `-i` so that optional distro-specific paths
+do not abort loading on systems where some binaries or directories are absent.
+This keeps the default deployment simple, but it also means rule load errors are
+ignored.
+
+If you want a strict pre-deployment validation, test a temporary copy with the
+`-i` line removed, for example:
+
+```bash
+grep -v '^-i$' audit.rules > /tmp/audit.rules.strict
+auditctl -R /tmp/audit.rules.strict
+```
+
 ## Sources
 
 The configuration is based on the following sources
