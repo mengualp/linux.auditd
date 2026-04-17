@@ -182,8 +182,8 @@ backup_existing_rules
 
 build_ci_copy "$rules_file" "$portable_rules" 0
 load_rules_copy "$portable_rules"
-sudo auditctl -l | grep -q 'process_creation'
+if ! sudo auditctl -l | grep -q 'process_creation'; then exit 1; fi
 
 build_ci_copy "$rules_file" "$strict_rules" 1
 load_rules_copy "$strict_rules"
-sudo auditctl -l | grep -q 'process_creation'
+if ! sudo auditctl -l | grep -q 'process_creation'; then exit 1; fi
