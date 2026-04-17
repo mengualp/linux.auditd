@@ -114,8 +114,9 @@
 -w /etc/modules-load.d/ -p wa -k modprobe
 
 ## KExec usage (all actions)
--a always,exit -F arch=b64 -S kexec_load -S kexec_file_load -k KEXEC
--a always,exit -F arch=b32 -S kexec_load -S kexec_file_load -k KEXEC
+## NOTE: kexec_file_load is x86_64-only; i386/b32 kexec is deprecated
+## and omitted here to keep the ruleset portable across libaudit versions.
+-a always,exit -F arch=b64 -S kexec_file_load -k KEXEC
 
 ## Special files
 -a always,exit -F arch=b64 -S mknod -S mknodat -k specialfiles
@@ -396,8 +397,10 @@
 # ipc system call
 # /usr/include/linux/ipc.h
 
--a always,exit -F arch=b64 -S msgctl -S msgget -S semctl -S semget -S semop -S semtimedop -S shmctl -S shmget -k Inter-Process_Communication
--a always,exit -F arch=b32 -S msgctl -S msgget -S semctl -S semget -S semop -S semtimedop -S shmctl -S shmget -k Inter-Process_Communication
+## NOTE: glibc's semop() is implemented via semtimedop() on modern systems;
+## the standalone semop name was dropped from some libaudit tables.
+-a always,exit -F arch=b64 -S msgctl -S msgget -S semctl -S semget -S shmctl -S shmget -k Inter-Process_Communication
+-a always,exit -F arch=b32 -S msgctl -S msgget -S semctl -S semget -S shmctl -S shmget -k Inter-Process_Communication
 
 # High Volume Events ----------------------------------------------------------
 
