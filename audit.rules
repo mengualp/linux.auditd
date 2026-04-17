@@ -70,7 +70,7 @@
 
 ## This prevents chrony from overwhelming the logs
 ## NOTE: subj_type= requires SELinux (see above)
--a never,exit -F arch=b64 -S adjtimex -F auid=-1 -F uid=chrony -F subj_type=chronyd_t
+-a never,exit -F arch=b64 -S adjtimex -F auid=unset -F uid=chrony -F subj_type=chronyd_t
 
 ## This is not very interesting and wastes a lot of space if the server is public facing
 -a always,exclude -F msgtype=CRYPTO_KEY_USER
@@ -105,8 +105,8 @@
 -w /etc/sysctl.d -p wa -k sysctl
 
 ## Kernel module loading and unloading
--a always,exit -F arch=b64 -S finit_module -S init_module -S delete_module -F auid!=-1 -k modules
--a always,exit -F arch=b32 -S finit_module -S init_module -S delete_module -F auid!=-1 -k modules
+-a always,exit -F arch=b64 -S finit_module -S init_module -S delete_module -F auid!=unset -k modules
+-a always,exit -F arch=b32 -S finit_module -S init_module -S delete_module -F auid!=unset -k modules
 
 ## Modprobe configuration
 -w /etc/modprobe.conf -p wa -k modprobe
@@ -123,12 +123,12 @@
 -a always,exit -F arch=b32 -S mknod -S mknodat -k specialfiles
 
 ## Mount operations (only attributable)
--a always,exit -F arch=b64 -S mount -S umount2 -S move_mount -S open_tree -S fsopen -S fsconfig -S fsmount -F auid!=-1 -k mount
--a always,exit -F arch=b32 -S mount -S umount2 -S move_mount -S open_tree -S fsopen -S fsconfig -S fsmount -F auid!=-1 -k mount
+-a always,exit -F arch=b64 -S mount -S umount2 -S move_mount -S open_tree -S fsopen -S fsconfig -S fsmount -F auid!=unset -k mount
+-a always,exit -F arch=b32 -S mount -S umount2 -S move_mount -S open_tree -S fsopen -S fsconfig -S fsmount -F auid!=unset -k mount
 
 ## Change swap (only attributable)
--a always,exit -F arch=b64 -S swapon -S swapoff -F auid!=-1 -k swap
--a always,exit -F arch=b32 -S swapon -S swapoff -F auid!=-1 -k swap
+-a always,exit -F arch=b64 -S swapon -S swapoff -F auid!=unset -k swap
+-a always,exit -F arch=b32 -S swapon -S swapoff -F auid!=unset -k swap
 
 ## Time
 -a always,exit -F arch=b64 -F uid!=ntp -S adjtimex -S settimeofday -S clock_settime -k time
@@ -277,22 +277,30 @@
 -w /etc/zsh/ -p wa -k shell_profiles
 
 ## Critical elements access failures
--a always,exit -F arch=b64 -S open -S openat -S open_by_handle_at -F dir=/etc -F success=0 -k unauthedfileaccess
--a always,exit -F arch=b32 -S open -S openat -S open_by_handle_at -F dir=/etc -F success=0 -k unauthedfileaccess
--a always,exit -F arch=b64 -S open -S openat -S open_by_handle_at -F dir=/bin -F success=0 -k unauthedfileaccess
--a always,exit -F arch=b32 -S open -S openat -S open_by_handle_at -F dir=/bin -F success=0 -k unauthedfileaccess
--a always,exit -F arch=b64 -S open -S openat -S open_by_handle_at -F dir=/sbin -F success=0 -k unauthedfileaccess
--a always,exit -F arch=b32 -S open -S openat -S open_by_handle_at -F dir=/sbin -F success=0 -k unauthedfileaccess
--a always,exit -F arch=b64 -S open -S openat -S open_by_handle_at -F dir=/usr/bin -F success=0 -k unauthedfileaccess
--a always,exit -F arch=b32 -S open -S openat -S open_by_handle_at -F dir=/usr/bin -F success=0 -k unauthedfileaccess
--a always,exit -F arch=b64 -S open -S openat -S open_by_handle_at -F dir=/usr/sbin -F success=0 -k unauthedfileaccess
--a always,exit -F arch=b32 -S open -S openat -S open_by_handle_at -F dir=/usr/sbin -F success=0 -k unauthedfileaccess
--a always,exit -F arch=b64 -S open -S openat -S open_by_handle_at -F dir=/var -F success=0 -k unauthedfileaccess
--a always,exit -F arch=b32 -S open -S openat -S open_by_handle_at -F dir=/var -F success=0 -k unauthedfileaccess
--a always,exit -F arch=b64 -S open -S openat -S open_by_handle_at -F dir=/home -F success=0 -k unauthedfileaccess
--a always,exit -F arch=b32 -S open -S openat -S open_by_handle_at -F dir=/home -F success=0 -k unauthedfileaccess
--a always,exit -F arch=b64 -S open -S openat -S open_by_handle_at -F dir=/srv -F success=0 -k unauthedfileaccess
--a always,exit -F arch=b32 -S open -S openat -S open_by_handle_at -F dir=/srv -F success=0 -k unauthedfileaccess
+-a always,exit -F arch=b64 -S open -S openat -S openat2 -S open_by_handle_at -F dir=/etc -F success=0 -F auid>=1000 -F auid!=unset -k unauthedfileaccess
+-a always,exit -F arch=b32 -S open -S openat -S openat2 -S open_by_handle_at -F dir=/etc -F success=0 -F auid>=1000 -F auid!=unset -k unauthedfileaccess
+-a always,exit -F arch=b64 -S open -S openat -S openat2 -S open_by_handle_at -F dir=/bin -F success=0 -F auid>=1000 -F auid!=unset -k unauthedfileaccess
+-a always,exit -F arch=b32 -S open -S openat -S openat2 -S open_by_handle_at -F dir=/bin -F success=0 -F auid>=1000 -F auid!=unset -k unauthedfileaccess
+-a always,exit -F arch=b64 -S open -S openat -S openat2 -S open_by_handle_at -F dir=/sbin -F success=0 -F auid>=1000 -F auid!=unset -k unauthedfileaccess
+-a always,exit -F arch=b32 -S open -S openat -S openat2 -S open_by_handle_at -F dir=/sbin -F success=0 -F auid>=1000 -F auid!=unset -k unauthedfileaccess
+-a always,exit -F arch=b64 -S open -S openat -S openat2 -S open_by_handle_at -F dir=/usr/bin -F success=0 -F auid>=1000 -F auid!=unset -k unauthedfileaccess
+-a always,exit -F arch=b32 -S open -S openat -S openat2 -S open_by_handle_at -F dir=/usr/bin -F success=0 -F auid>=1000 -F auid!=unset -k unauthedfileaccess
+-a always,exit -F arch=b64 -S open -S openat -S openat2 -S open_by_handle_at -F dir=/usr/sbin -F success=0 -F auid>=1000 -F auid!=unset -k unauthedfileaccess
+-a always,exit -F arch=b32 -S open -S openat -S openat2 -S open_by_handle_at -F dir=/usr/sbin -F success=0 -F auid>=1000 -F auid!=unset -k unauthedfileaccess
+-a always,exit -F arch=b64 -S open -S openat -S openat2 -S open_by_handle_at -F dir=/var -F success=0 -F auid>=1000 -F auid!=unset -k unauthedfileaccess
+-a always,exit -F arch=b32 -S open -S openat -S openat2 -S open_by_handle_at -F dir=/var -F success=0 -F auid>=1000 -F auid!=unset -k unauthedfileaccess
+-a always,exit -F arch=b64 -S open -S openat -S openat2 -S open_by_handle_at -F dir=/home -F success=0 -F auid>=1000 -F auid!=unset -k unauthedfileaccess
+-a always,exit -F arch=b32 -S open -S openat -S openat2 -S open_by_handle_at -F dir=/home -F success=0 -F auid>=1000 -F auid!=unset -k unauthedfileaccess
+-a always,exit -F arch=b64 -S open -S openat -S openat2 -S open_by_handle_at -F dir=/srv -F success=0 -F auid>=1000 -F auid!=unset -k unauthedfileaccess
+-a always,exit -F arch=b32 -S open -S openat -S openat2 -S open_by_handle_at -F dir=/srv -F success=0 -F auid>=1000 -F auid!=unset -k unauthedfileaccess
+
+### Permission-denied opens from system accounts/daemons (no login session).
+### Narrower than success=0 above to avoid the file-not-found noise that
+### dominates daemon activity — EACCES/EPERM are the high-signal cases.
+-a always,exit -F arch=b64 -S open -S openat -S openat2 -S open_by_handle_at -F exit=-EACCES -F auid=unset -k unauthedfileaccess_system
+-a always,exit -F arch=b64 -S open -S openat -S openat2 -S open_by_handle_at -F exit=-EPERM -F auid=unset -k unauthedfileaccess_system
+-a always,exit -F arch=b32 -S open -S openat -S openat2 -S open_by_handle_at -F exit=-EACCES -F auid=unset -k unauthedfileaccess_system
+-a always,exit -F arch=b32 -S open -S openat -S openat2 -S open_by_handle_at -F exit=-EPERM -F auid=unset -k unauthedfileaccess_system
 
 ## Session initiation information
 -w /var/run/utmp -p wa -k session
@@ -300,12 +308,12 @@
 -w /var/log/wtmp -p wa -k session
 
 ## Discretionary Access Control (DAC) modifications
--a always,exit -F arch=b64 -S chmod -S fchmod -S fchmodat -F auid>=1000 -F auid!=-1 -k perm_mod
--a always,exit -F arch=b32 -S chmod -S fchmod -S fchmodat -F auid>=1000 -F auid!=-1 -k perm_mod
--a always,exit -F arch=b64 -S chown -S fchown -S fchownat -S lchown -F auid>=1000 -F auid!=-1 -k perm_mod
--a always,exit -F arch=b32 -S chown -S fchown -S fchownat -S lchown -F auid>=1000 -F auid!=-1 -k perm_mod
--a always,exit -F arch=b64 -S setxattr -S lsetxattr -S fsetxattr -S removexattr -S lremovexattr -S fremovexattr -F auid>=1000 -F auid!=-1 -k perm_mod
--a always,exit -F arch=b32 -S setxattr -S lsetxattr -S fsetxattr -S removexattr -S lremovexattr -S fremovexattr -F auid>=1000 -F auid!=-1 -k perm_mod
+-a always,exit -F arch=b64 -S chmod -S fchmod -S fchmodat -F auid>=1000 -F auid!=unset -k perm_mod
+-a always,exit -F arch=b32 -S chmod -S fchmod -S fchmodat -F auid>=1000 -F auid!=unset -k perm_mod
+-a always,exit -F arch=b64 -S chown -S fchown -S fchownat -S lchown -F auid>=1000 -F auid!=unset -k perm_mod
+-a always,exit -F arch=b32 -S chown -S fchown -S fchownat -S lchown -F auid>=1000 -F auid!=unset -k perm_mod
+-a always,exit -F arch=b64 -S setxattr -S lsetxattr -S fsetxattr -S removexattr -S lremovexattr -S fremovexattr -F auid>=1000 -F auid!=unset -k perm_mod
+-a always,exit -F arch=b32 -S setxattr -S lsetxattr -S fsetxattr -S removexattr -S lremovexattr -S fremovexattr -F auid>=1000 -F auid!=unset -k perm_mod
 
 # Special Rules ---------------------------------------------------------------
 
@@ -322,8 +330,8 @@
 -a always,exit -F arch=b32 -S memfd_create -F key=anon_file_create
 
 ## Timestomping (T1070.006)
--a always,exit -F arch=b64 -S utimensat -S utimes -S futimesat -F auid>=1000 -F auid!=-1 -k T1070_006_timestomp
--a always,exit -F arch=b32 -S utimensat -S utimes -S futimesat -F auid>=1000 -F auid!=-1 -k T1070_006_timestomp
+-a always,exit -F arch=b64 -S utimensat -S utimes -S futimesat -F auid>=1000 -F auid!=unset -k T1070_006_timestomp
+-a always,exit -F arch=b32 -S utimensat -S utimes -S futimesat -F auid>=1000 -F auid!=unset -k T1070_006_timestomp
 
 ## eBPF program loading
 -a always,exit -F arch=b64 -S bpf -k bpf
@@ -355,7 +363,7 @@
 
 ## Privilege Abuse
 ### The purpose of this rule is to detect when an admin may be abusing power by looking in user's home dir.
--a always,exit -F dir=/home -F uid=0 -F auid>=1000 -F auid!=-1 -C auid!=obj_uid -k power_abuse
+-a always,exit -F dir=/home -F uid=0 -F auid>=1000 -F auid!=unset -C auid!=obj_uid -k power_abuse
 
 # Socket Creations
 # will catch both IPv4 and IPv6
@@ -413,15 +421,15 @@
 -a always,exit -F arch=b64 -S execve -S execveat -k process_creation
 
 ## File Deletion Events by User
--a always,exit -F arch=b64 -S rmdir -S unlink -S unlinkat -S rename -S renameat -F auid>=1000 -F auid!=-1 -k delete
--a always,exit -F arch=b32 -S rmdir -S unlink -S unlinkat -S rename -S renameat -F auid>=1000 -F auid!=-1 -k delete
+-a always,exit -F arch=b64 -S rmdir -S unlink -S unlinkat -S rename -S renameat -S renameat2 -F auid>=1000 -F auid!=unset -k delete
+-a always,exit -F arch=b32 -S rmdir -S unlink -S unlinkat -S rename -S renameat -S renameat2 -F auid>=1000 -F auid!=unset -k delete
 
 ## File Access
 ### Unauthorized Access (unsuccessful)
--a always,exit -F arch=b64 -S creat -S open -S openat -S open_by_handle_at -S truncate -S ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=-1 -k file_access
--a always,exit -F arch=b64 -S creat -S open -S openat -S open_by_handle_at -S truncate -S ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=-1 -k file_access
--a always,exit -F arch=b32 -S creat -S open -S openat -S open_by_handle_at -S truncate -S ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=-1 -k file_access
--a always,exit -F arch=b32 -S creat -S open -S openat -S open_by_handle_at -S truncate -S ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=-1 -k file_access
+-a always,exit -F arch=b64 -S creat -S open -S openat -S openat2 -S open_by_handle_at -S truncate -S ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=unset -k file_access
+-a always,exit -F arch=b64 -S creat -S open -S openat -S openat2 -S open_by_handle_at -S truncate -S ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=unset -k file_access
+-a always,exit -F arch=b32 -S creat -S open -S openat -S openat2 -S open_by_handle_at -S truncate -S ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=unset -k file_access
+-a always,exit -F arch=b32 -S creat -S open -S openat -S openat2 -S open_by_handle_at -S truncate -S ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=unset -k file_access
 
 ### Unsuccessful Creation
 -a always,exit -F arch=b64 -S mkdir -S mkdirat -S creat -S link -S linkat -S symlink -S symlinkat -S mknod -S mknodat -F exit=-EACCES -k file_creation
@@ -430,10 +438,10 @@
 -a always,exit -F arch=b32 -S mkdir -S mkdirat -S creat -S link -S linkat -S symlink -S symlinkat -S mknod -S mknodat -F exit=-EPERM -k file_creation
 
 ### Unsuccessful Modification
--a always,exit -F arch=b64 -S rename -S renameat -S truncate -S chmod -S setxattr -S lsetxattr -S removexattr -S lremovexattr -F exit=-EACCES -k file_modification
--a always,exit -F arch=b64 -S rename -S renameat -S truncate -S chmod -S setxattr -S lsetxattr -S removexattr -S lremovexattr -F exit=-EPERM -k file_modification
--a always,exit -F arch=b32 -S rename -S renameat -S truncate -S chmod -S setxattr -S lsetxattr -S removexattr -S lremovexattr -F exit=-EACCES -k file_modification
--a always,exit -F arch=b32 -S rename -S renameat -S truncate -S chmod -S setxattr -S lsetxattr -S removexattr -S lremovexattr -F exit=-EPERM -k file_modification
+-a always,exit -F arch=b64 -S rename -S renameat -S renameat2 -S truncate -S chmod -S setxattr -S lsetxattr -S removexattr -S lremovexattr -F exit=-EACCES -k file_modification
+-a always,exit -F arch=b64 -S rename -S renameat -S renameat2 -S truncate -S chmod -S setxattr -S lsetxattr -S removexattr -S lremovexattr -F exit=-EPERM -k file_modification
+-a always,exit -F arch=b32 -S rename -S renameat -S renameat2 -S truncate -S chmod -S setxattr -S lsetxattr -S removexattr -S lremovexattr -F exit=-EACCES -k file_modification
+-a always,exit -F arch=b32 -S rename -S renameat -S renameat2 -S truncate -S chmod -S setxattr -S lsetxattr -S removexattr -S lremovexattr -F exit=-EPERM -k file_modification
 
 ## 32bit ABI Exploitation
 ### https://github.com/linux-audit/audit-userspace/blob/c014eec64b3a16c004f4a75e5792a4ac2fcc0df2/rules/21-no32bit.rules
