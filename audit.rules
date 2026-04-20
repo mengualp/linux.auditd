@@ -68,9 +68,10 @@
 -a never,user -F subj_type=crond_t
 -a never,exit -F subj_type=crond_t
 
-## This prevents chrony from overwhelming the logs
-## NOTE: subj_type= requires SELinux (see above)
--a never,exit -F arch=b64 -S adjtimex -F auid=unset -F uid=chrony -F subj_type=chronyd_t
+## Optional, distro-specific chrony/ntp suppression (commented out by default):
+## Account names differ across distros (chrony vs _chrony on Ubuntu 24.04) so
+## uncomment and adjust uid= to your host's time-daemon account if needed.
+#-a never,exit -F arch=b64 -S adjtimex -F auid=unset -F uid=chrony -F subj_type=chronyd_t
 
 ## This is not very interesting and wastes a lot of space if the server is public facing
 -a always,exclude -F msgtype=CRYPTO_KEY_USER
@@ -131,8 +132,11 @@
 -a always,exit -F arch=b32 -S swapon -S swapoff -F auid!=unset -k swap
 
 ## Time
--a always,exit -F arch=b64 -F uid!=ntp -S adjtimex -S settimeofday -S clock_settime -k time
--a always,exit -F arch=b32 -F uid!=ntp -S adjtimex -S settimeofday -S clock_settime -k time
+## Account names differ across distros (ntp/chrony/systemd-timesync) so no
+## uid!= filter is applied here. Add a distro-specific never,exit overlay
+## above if your time daemon generates excessive noise.
+-a always,exit -F arch=b64 -S adjtimex -S settimeofday -S clock_settime -k time
+-a always,exit -F arch=b32 -S adjtimex -S settimeofday -S clock_settime -k time
 ### Local time zone
 -w /etc/localtime -p wa -k localtime
 
