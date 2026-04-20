@@ -14,6 +14,14 @@
 # threat-actor TTPs) belongs in Sigma rules evaluated by your SIEM or
 # a host-level agent, not in the audit ruleset itself.
 #
+# UID_MIN convention
+#   Rules that target human-user activity use `auid>=1000 -F auid!=unset`.
+#   1000 is the default UID_MIN on Debian/Ubuntu and RHEL 7+ / Fedora.
+#   If your host uses a different UID_MIN (e.g. 500 on RHEL/CentOS 6),
+#   replace 1000 everywhere with `awk '/^UID_MIN/{print $2}' /etc/login.defs`.
+#   auditd rules do not support variables, so this substitution must be
+#   done at deploy time (Ansible/Jinja2, sed, envsubst, etc.).
+#
 # Aurora Linux - Real-Time Linux EDR
 #   https://github.com/Nextron-Labs/aurora-linux
 #
