@@ -18,12 +18,17 @@ The idea of this auditd configuration is to provide a basic configuration that
 - covers security relevant activity
 - is easy to read (different sections, many comments)
 
-## Aurora Linux
+## Related Projects
 
-[Aurora Linux](https://github.com/Nextron-Labs/aurora-linux) is a lightweight
-and customizable Sigma-based agent for Linux. It uses eBPF-based telemetry,
-enriches relevant events in user space, and applies Sigma rules to detect
-suspicious activity with low overhead and transparent logic.
+This ruleset is intended to stay agnostic of the downstream detection logic.
+It focuses on collecting broadly useful audit telemetry that can then be
+analyzed in different ways, for example with Sigma-based tooling or SIEM
+queries.
+
+One open source project that can make use of this audit data is
+[Aurora Linux](https://github.com/Nextron-Labs/aurora-linux), a lightweight
+and customizable Sigma-based agent for Linux that combines eBPF-based telemetry
+with user-space enrichment and Sigma rule matching.
 
 ## Validation
 
