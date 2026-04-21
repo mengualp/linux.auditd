@@ -22,16 +22,13 @@
 #   auditd rules do not support variables, so this substitution must be
 #   done at deploy time (Ansible/Jinja2, sed, envsubst, etc.).
 #
-# Aurora Linux - Real-Time Linux EDR
+# Aurora Linux - Sigma-Based Linux Agent
 #   https://github.com/Nextron-Labs/aurora-linux
 #
-#   Aurora Linux is a real-time Linux EDR agent. It attaches eBPF programs
-#   to kernel tracepoints (process exec, file open, network state changes,
-#   bpf syscalls, and file timestamp changes) and ingests Linux audit logs,
-#   enriches the captured telemetry in user space, and evaluates each event
-#   against Sigma rules and IOC feeds to emit high-signal alerts in text or
-#   JSON. The goal is practical host detection with low overhead and clear,
-#   actionable output.
+#   Aurora Linux is a lightweight and customizable Sigma-based agent for Linux.
+#   It uses eBPF-based telemetry, enriches relevant events in user space, and
+#   applies Sigma rules to detect suspicious activity with low overhead and
+#   transparent logic.
 
 # Remove any existing rules
 -D
