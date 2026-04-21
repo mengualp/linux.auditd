@@ -18,6 +18,46 @@ The idea of this auditd configuration is to provide a basic configuration that
 - covers security relevant activity
 - is easy to read (different sections, many comments)
 
+## Related Projects
+
+This ruleset is intended to stay agnostic of the downstream detection logic.
+It focuses on collecting broadly useful audit telemetry that can then be
+analyzed in different ways, for example with Sigma-based tooling or SIEM
+queries.
+
+One open source project that can make use of this audit data is
+[Aurora Linux](https://github.com/Nextron-Labs/aurora-linux), a lightweight
+and customizable Sigma-based agent for Linux that combines eBPF-based telemetry
+with user-space enrichment and Sigma rule matching.
+
+## Validation
+
+This ruleset intentionally includes `-i` so that optional distro-specific paths
+do not abort loading on systems where some binaries or directories are absent.
+This keeps the default deployment simple, but it also means rule load errors are
+ignored.
+
+If you want a strict pre-deployment validation, test a temporary copy with the
+`-i` line removed, for example:
+
+```bash
+grep -v '^-i$' audit.rules > /tmp/audit.rules.strict
+auditctl -R /tmp/audit.rules.strict
+```
+
+## UID_MIN
+
+Several rules in `audit.rules` use `auid>=1000 -F auid!=unset` to focus on
+interactive user activity and exclude unset login sessions.
+
+`1000` is the common `UID_MIN` on many Linux distributions, but it is not
+universal. If your host uses a different `UID_MIN`, check `/etc/login.defs`
+and replace `1000` in `audit.rules` before deployment:
+
+```bash
+awk '$1=="UID_MIN" { print $2 }' /etc/login.defs
+```
+
 ## Sources
 
 The configuration is based on the following sources
