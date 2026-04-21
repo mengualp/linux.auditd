@@ -10,13 +10,32 @@ Best Practice Auditd Configuration
 
 ## Idea
 
-The idea of this auditd configuration is to provide a basic configuration that
+The idea of this auditd configuration is to provide a best-practice baseline that
 
-- works out-of-the-box on all major Linux distributions 
-- fits most use cases
-- produces a reasonable amount of log data
-- covers security relevant activity
-- is easy to read (different sections, many comments)
+- is designed to load out-of-the-box on major Linux distributions
+- covers a broad set of security-relevant host activity
+- prefers reusable telemetry over long lists of hard-coded detections
+- keeps the detection logic in Sigma rules, SIEM content, or host-side analytics
+- stays easy to read and adapt through sectioning and comments
+
+The simplified ruleset intentionally keeps some high-value but potentially
+high-volume telemetry, especially process creation, socket creation, and file
+access failure events. Tune these sections to your environment if needed.
+
+## Coverage
+
+The current configuration focuses on the following coverage areas:
+
+- self-auditing and audit configuration integrity
+- noise filters and portability-oriented exclusions
+- kernel, module, mount, swap, and time changes
+- scheduled tasks, account databases, PAM, sudo, and login state
+- network, firewall, startup, service, and boot-path configuration
+- library paths, shell profiles, SSH, systemd, and MAC policy changes
+- failed access attempts, DAC modifications, session files, and privilege-abuse heuristics
+- special primitives such as `ptrace`, `memfd_create`, `bpf`, namespaces, `io_uring`, and `userfaultfd`
+- software, container, and security-tooling configuration paths
+- high-volume telemetry such as `execve`, `execveat`, socket creation, file deletion, and 32-bit ABI usage
 
 ## Related Projects
 
@@ -45,6 +64,9 @@ grep -v '^-i$' audit.rules > /tmp/audit.rules.strict
 auditctl -R /tmp/audit.rules.strict
 ```
 
+The repository also includes GitHub Actions checks that lint the rules and
+validate that a portable CI copy and a strict copy can both be loaded on Ubuntu.
+
 ## UID_MIN
 
 Several rules in `audit.rules` use `auid>=1000 -F auid!=unset` to focus on
@@ -60,7 +82,8 @@ awk '$1=="UID_MIN" { print $2 }' /etc/login.defs
 
 ## Sources
 
-The configuration is based on the following sources
+The configuration is based on the following sources and years of merged
+improvements to the default ruleset:
 
 Gov.uk auditd rules
 https://github.com/gds-operations/puppet-auditd/pull/1
@@ -86,7 +109,12 @@ https://github.com/linux-audit/audit-userspace/blob/master/rules/30-nispom.rules
 
 ## Video Explanations by IppSec
 
-IppSec captured a video that explains how to detect the exploitation of the OMIGOD vulnerability using auditd. In that video, he walks you through the audit configuration maintained in this repo and explains how to use it. I highly recommend this video to get a better understanding of what is happening in the config. 
+IppSec captured a video that explains how to detect the exploitation of the
+OMIGOD vulnerability using auditd. The core auditd concepts in that video are
+still useful, but the ruleset in this repository has since been simplified
+significantly. Treat the video as historical background and an introduction to
+auditd-based detection ideas, not as line-by-line documentation of the current
+`audit.rules`.
 
 https://www.youtube.com/watch?v=lc1i9h1GyMA
 
