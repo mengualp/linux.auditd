@@ -22,14 +22,6 @@
 #   auditd rules do not support variables, so this substitution must be
 #   done at deploy time (Ansible/Jinja2, sed, envsubst, etc.).
 #
-# Aurora Linux - Sigma-Based Linux Agent
-#   https://github.com/Nextron-Labs/aurora-linux
-#
-#   Aurora Linux is a lightweight and customizable Sigma-based agent for Linux.
-#   It uses eBPF-based telemetry, enriches relevant events in user space, and
-#   applies Sigma rules to detect suspicious activity with low overhead and
-#   transparent logic.
-
 # Remove any existing rules
 -D
 
