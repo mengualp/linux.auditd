@@ -320,6 +320,9 @@
 -w /var/log/wtmp -p wa -k session
 
 ## Discretionary Access Control (DAC) modifications
+## NOTE: Rules that use `auid>=1000` assume the common Linux `UID_MIN=1000`.
+## If your host uses a different UID_MIN in `/etc/login.defs`, replace `1000`
+## accordingly before deployment. `auid!=unset` excludes daemon/system sessions.
 -a always,exit -F arch=b64 -S chmod -S fchmod -S fchmodat -F auid>=1000 -F auid!=unset -k perm_mod
 -a always,exit -F arch=b32 -S chmod -S fchmod -S fchmodat -F auid>=1000 -F auid!=unset -k perm_mod
 -a always,exit -F arch=b64 -S chown -S fchown -S fchownat -S lchown -F auid>=1000 -F auid!=unset -k perm_mod

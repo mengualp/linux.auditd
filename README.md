@@ -33,6 +33,19 @@ grep -v '^-i$' audit.rules > /tmp/audit.rules.strict
 auditctl -R /tmp/audit.rules.strict
 ```
 
+## UID_MIN
+
+Several rules in `audit.rules` use `auid>=1000 -F auid!=unset` to focus on
+interactive user activity and exclude unset login sessions.
+
+`1000` is the common `UID_MIN` on many Linux distributions, but it is not
+universal. If your host uses a different `UID_MIN`, check `/etc/login.defs`
+and replace `1000` in `audit.rules` before deployment:
+
+```bash
+awk '$1=="UID_MIN" { print $2 }' /etc/login.defs
+```
+
 ## Sources
 
 The configuration is based on the following sources
