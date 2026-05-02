@@ -365,6 +365,18 @@
 -a always,exit -F arch=b64 -S acct -k process_accounting
 -a always,exit -F arch=b32 -S acct -k process_accounting
 
+## Kernel crypto sockets (AF_ALG)
+### Low-noise on most hosts. Copy Fail-style abuse requires AF_ALG plus
+### SOL_ALG configuration, while bind() emits a SOCKADDR record that downstream
+### tooling can decode to recover salg_type / salg_name. Audit cannot match
+### those strings in-kernel, so keep the collection generic here.
+-a always,exit -F arch=b64 -S socket -F a0=38 -F success=1 -F auid>=1000 -F auid!=unset -k af_alg
+-a always,exit -F arch=b32 -S socket -F a0=38 -F success=1 -F auid>=1000 -F auid!=unset -k af_alg
+-a always,exit -F arch=b64 -S bind -F a2=88 -F success=1 -F auid>=1000 -F auid!=unset -k af_alg
+-a always,exit -F arch=b32 -S bind -F a2=88 -F success=1 -F auid>=1000 -F auid!=unset -k af_alg
+-a always,exit -F arch=b64 -S setsockopt -F a1=279 -F success=1 -F auid>=1000 -F auid!=unset -k af_alg
+-a always,exit -F arch=b32 -S setsockopt -F a1=279 -F success=1 -F auid>=1000 -F auid!=unset -k af_alg
+
 ## Privilege Abuse
 ### The purpose of this rule is to detect when an admin may be abusing power by looking in user's home dir.
 -a always,exit -F dir=/home -F uid=0 -F auid>=1000 -F auid!=unset -C auid!=obj_uid -k power_abuse
@@ -377,6 +389,12 @@
 
 -a always,exit -F arch=b32 -S socket -F a0=10 -k network_socket_created
 -a always,exit -F arch=b64 -S socket -F a0=10 -k network_socket_created
+
+## Optional overlay: enable only if splice/vmsplice are rare in your estate.
+## Correlate short bursts of these events with recent af_alg activity from the
+## same pid/auid when hunting Copy Fail-style exploitation.
+#-a always,exit -F arch=b64 -S splice -S vmsplice -F success=1 -F auid>=1000 -F auid!=unset -k splice_user
+#-a always,exit -F arch=b32 -S splice -S vmsplice -F success=1 -F auid>=1000 -F auid!=unset -k splice_user
 
 # Software Management ---------------------------------------------------------
 
