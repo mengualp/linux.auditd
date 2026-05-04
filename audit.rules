@@ -381,6 +381,14 @@
 ### The purpose of this rule is to detect when an admin may be abusing power by looking in user's home dir.
 -a always,exit -F dir=/home -F uid=0 -F auid>=1000 -F auid!=unset -C auid!=obj_uid -k power_abuse
 
+## Raw sockets
+### Logs all raw sockets
+-a always,exit -F arch=b32 -S socket -F a0=17 -F a1=3 -k raw_network_socket_created
+-a always,exit -F arch=b64 -S socket -F a0=17 -F a1=3 -k raw_network_socket_created
+### Keep watch for when BPF filters are attached
+-a always,exit -F arch=b32 -S setsockopt -F a1=1 -F a2=26 -k socket_bpf_filter_attached
+-a always,exit -F arch=b64 -S setsockopt -F a1=1 -F a2=26 -k socket_bpf_filter_attached
+
 # Socket Creations
 # will catch both IPv4 and IPv6
 
@@ -389,14 +397,6 @@
 
 -a always,exit -F arch=b32 -S socket -F a0=10 -k network_socket_created
 -a always,exit -F arch=b64 -S socket -F a0=10 -k network_socket_created
-
-# Raw sockets
-### Logs all raw sockets
--a always,exit -F arch=b32 -S socket -F a0=17 -F a1=3 -k raw_network_socket_created
--a always,exit -F arch=b64 -S socket -F a0=17 -F a1=3 -k raw_network_socket_created
-### Keep watch for when BPF filters are attached
--a always,exit -F arch=b32 -S setsockopt -F a1=1 -F a2=26 -k socket_bpf_filter_attached
--a always,exit -F arch=b64 -S setsockopt -F a1=1 -F a2=26 -k socket_bpf_filter_attached
 
 ## Optional overlay: enable only if splice/vmsplice are rare in your estate.
 ## Correlate short bursts of these events with recent af_alg activity from the
